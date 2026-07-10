@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LLMs Struggle to Rank Products Robustly | FramingBench</title>
+<meta name="description" content="FramingBench measures how 19 editorial framing techniques shift LLM product rankings across 10 consumer domains and 7 models, including frontier systems.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="LLMs Struggle to Rank Products Robustly">
+<meta property="og:description" content="FramingBench: every LLM we test shows framing susceptibility. Product rankings change when a comparison article is reframed, even though the product specifications stay the same.">
+<meta property="og:url" content="https://framingbench.github.io/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;750&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ============ NAV ============ -->
+<header class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top"><span class="brand-mark">◨</span>FramingBench</a>
+    <nav class="nav-links">
+      <a href="#overview">Overview</a>
+      <a href="#setup">How it works</a>
+      <a href="#techniques">Techniques</a>
+      <a href="#results">Results</a>
+      <a href="#mitigations">Mitigations</a>
+      <a class="nav-cta" href="assets/framingbench_preprint.pdf" target="_blank" rel="noopener">Paper</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="top">
+  <div class="hero-inner">
+    <span class="tag">Benchmark · 2026</span>
+    <h1 class="title">LLMs Struggle to Rank Products Robustly</h1>
+    <p class="subtitle">FramingBench tests whether the editorial techniques that convince human
+      shoppers can also steer which product an LLM agent recommends.</p>
+
+    <p class="authors" data-editable="authors">
+      <span class="au">Kumail Alhamoud</span><sup>*1</sup>, <span class="au">Charikleia Moraitaki</span><sup>*1</sup>,
+      <span class="au">Carlos Hinojosa</span><sup>2</sup>, <span class="au">Jennifer Zhou</span><sup>1</sup>,
+      <span class="au">Yuexing Hao</span><sup>1</sup>, <span class="au">Philip Torr</span><sup>3</sup>,
+      <span class="au">Adel Bibi</span><sup>3</sup>, <span class="au">Marzyeh Ghassemi</span><sup>1</sup>
+    </p>
+    <p class="affil" data-editable="affil">
+      <sup>1</sup>MIT &nbsp;&nbsp; <sup>2</sup>KAUST &nbsp;&nbsp; <sup>3</sup>University of Oxford
+      &nbsp;&nbsp;<span class="eq">*Equal contribution</span>
+    </p>
+
+    <ul class="paper-links">
+      <li><a href="assets/framingbench_preprint.pdf" data-editable="paper" target="_blank" rel="noopener"><span class="ic">📄</span> Paper</a></li>
+      <li><a href="#cite"><span class="ic">❝</span> BibTeX</a></li>
+      <li><a href="https://huggingface.co/datasets/framingbench/framingbench" target="_blank" rel="noopener"><span class="ic">🗂️</span> Data</a></li>
+      <li><a href="https://github.com/m1k2zoo/framingbench" target="_blank" rel="noopener"><span class="ic">💻</span> Code</a></li>
+    </ul>
+
+    <div class="stats">
+      <div class="stat"><b>19</b><span>influence techniques grounded in communication and marketing research</span></div>
+      <div class="stat"><b>10</b><span>diverse consumer domains, such as consumer electronics, personal finance, and travel</span></div>
+      <div class="stat"><b>7</b><span>LLMs tested, spanning open-source, small closed-source, and frontier models</span></div>
+      <div class="stat"><b>76%</b><span>best technique pushes the target product to #1 in 76% of cases</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TEASER ============ -->
+<section class="teaser">
+  <div class="wrap">
+    <figure class="teaser-fig">
+      <div class="browser">
+        <div class="browser-bar"><i></i><i></i><i></i></div>
+        <img src="assets/figures/teaser.png"
+             alt="A user asks for the best magnesium supplement. Two comparison articles list the same four products with the same specifications. The first adds best-for labels and the LLM recommends PureForm. The second adds one sentence saying dose matters most and the LLM switches to VitalDose.">
+      </div>
+      <figcaption>
+        <b>LLMs struggle to rank products because they show framing susceptibility.</b>
+        Both articles list the same four products with the same specifications. The first article
+        adds "best for" labels that push the model toward <em>PureForm</em>. The second adds one
+        sentence saying dose is the most important factor, and the model switches to <em>VitalDose</em>.
+        The only thing that changed is the framing.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ OVERVIEW ============ -->
+<section class="section" id="overview">
+  <div class="wrap narrow prose">
+    <span class="eyebrow">Overview</span>
+    <h2 class="h2">The question</h2>
+    <p class="lead">
+      Hundreds of millions of people now ask LLM agents which product to buy. A common query is
+      <em>"what is the best magnesium supplement?"</em>. The agent searches the web, reads what it
+      finds, and recommends a product. Most of what it reads is third-party comparison articles.
+      These articles may use editorial framing techniques that were designed to influence human shoppers.
+    </p>
+    <p class="q">Do these same techniques decide which product an LLM recommends?</p>
+    <p>
+      FramingBench answers this. The benchmark measures how 19 editorial framing techniques shift
+      LLM product rankings. We test 10 consumer domains and 7 LLMs, including frontier models such
+      as Claude Sonnet and GPT-5.4. Every model we test shows <strong>framing susceptibility</strong>.
+      Its product ranking changes when we reframe the document, even though the underlying product
+      specifications stay the same.
+    </p>
+    <p>
+      The effect is large. The strongest technique moves a chosen product to rank 1 in 76% of cases.
+      Standard mitigation strategies built for prompt injection and adversarial attacks do little here.
+      We propose two alternatives that work better. The first rewrites each document into a neutral form
+      before the model reads it. The second lets the user state the evaluation criteria in the prompt.
+    </p>
+  </div>
+</section>
+
+<!-- ============ HOW IT WORKS ============ -->
+<section class="section" id="setup">
+  <div class="wrap">
+    <span class="eyebrow">How it works</span>
+    <h2 class="h2">Only the document changes</h2>
+    <p class="section-note">
+      Every test gives the LLM a comparison document and a fixed query, then asks it to rank all the
+      products. The document is the only thing we change. Any shift in the ranking comes from that
+      change alone.
+    </p>
+
+    <figure class="method-fig">
+      <img src="assets/figures/benchmark_construction.png"
+           alt="FramingBench construction pipeline: we identify ranked comparison articles on the internet across 10 domains, an LLM extracts specifications and a human verifies to build a neutral baseline document for each domain, we apply 19 influence techniques to promote each of 2 target products, and every document passes human review, yielding 400 documents.">
+      <figcaption>
+        <b>How FramingBench is built.</b> We scrape one real comparison article per domain, rewrite it
+        into a neutral baseline that preserves every product specification, then apply each of the 19
+        influence techniques to promote a chosen target. Every document is human-reviewed, yielding 400
+        documents in the main set.
+      </figcaption>
+    </figure>
+
+    <div class="pipeline">
+      <div class="step">
+        <span class="num">1</span>
+        <h4>Scrape real articles</h4>
+        <p>We collect a real "best of" comparison article for each of the 10 consumer domains.</p>
+      </div>
+      <div class="step">
+        <span class="num">2</span>
+        <h4>Build a neutral baseline</h4>
+        <p>We rewrite each article into a neutral document that keeps every product specification and
+          removes the opinions.</p>
+      </div>
+      <div class="step">
+        <span class="num">3</span>
+        <h4>Apply the techniques</h4>
+        <p>We apply each of the 19 techniques to the baseline to promote a chosen target product,
+          while keeping the specifications truthful.</p>
+      </div>
+      <div class="step">
+        <span class="num">4</span>
+        <h4>Human review</h4>
+        <p>Three authors read and audit every document. This produces 400 documents in the main set.</p>
+      </div>
+    </div>
+
+    <div class="metric-cards">
+      <div class="metric-card">
+        <h4>Ranking instability</h4>
+        <p>How much the ranking moves in any direction when we reframe the document. We measure it
+          with total variation (<span class="mono">TV</span>) distance between the two rankings.</p>
+      </div>
+      <div class="metric-card">
+        <h4>Target promotability</h4>
+        <p>How far a chosen target product moves up the ranking. We report the top-1 rate and the
+          normalized rank gain (<span class="mono">NRG</span>).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TECHNIQUES ============ -->
+<section class="section" id="techniques">
+  <div class="wrap">
+    <span class="eyebrow">Taxonomy</span>
+    <h2 class="h2">The 19 influence techniques</h2>
+    <p class="section-note">
+      Every technique is a truthful edit. It keeps the product specifications intact and changes only
+      how they are framed. Three of the four groups, Relation, Quantity, and Manner, are based on
+      Information Manipulation Theory (IMT). IMT studies how a human can mislead another by breaking the
+      Gricean maxims, the unspoken rules of cooperative communication. We use the three maxims that a
+      writer can break while keeping every statement true. Breaking the fourth maxim requires stating a
+      falsehood, which can introduce legal complications when promoting products and is hence less
+      likely, so we leave it out.
+    </p>
+
+    <div class="tax-grid">
+      <div class="tax-col c-processing">
+        <div class="tax-head">
+          <h4><span class="letter">P</span> Processing</h4>
+          <p>Structural cues that LLMs are sensitive to.</p>
+        </div>
+        <ul>
+          <li><code>P1</code><b>Position</b>Move the target to a prominent spot in the document.</li>
+          <li><code>P2</code><b>Asymmetric depth</b>Expand the target and compress the others.</li>
+          <li><code>P3</code><b>Format</b>Bold, bullet, or tabulate the target.</li>
+        </ul>
+      </div>
+
+      <div class="tax-col c-relation">
+        <div class="tax-head">
+          <h4><span class="letter">R</span> Relation</h4>
+          <p>What gets connected to the evaluation.</p>
+        </div>
+        <ul>
+          <li><code>R1</code><b>Irrelevance</b>Add tangential positive content about the target.</li>
+          <li><code>R2</code><b>Inter-attribute</b>Link the target's strengths causally.</li>
+          <li><code>R3</code><b>Bandwagon</b>Cite the target's popularity or consensus.</li>
+        </ul>
+      </div>
+
+      <div class="tax-col c-quantity">
+        <div class="tax-head">
+          <h4><span class="letter">Q</span> Quantity</h4>
+          <p>What information gets included.</p>
+        </div>
+        <ul>
+          <li><code>Q1</code><b>Selective omission</b>Drop attributes where the target looks weak.</li>
+          <li><code>Q2</code><b>Statistics</b>Add true stats that favor the target.</li>
+          <li><code>Q3</code><b>Citations</b>Add citations supporting the target's claims.</li>
+          <li><code>Q4</code><b>Expert quotation</b>Quote real experts on the target's strengths.</li>
+          <li><code>Q5</code><b>Social proof</b>Add real usage or popularity numbers.</li>
+        </ul>
+      </div>
+
+      <div class="tax-col c-manner">
+        <div class="tax-head">
+          <h4><span class="letter">M</span> Manner</h4>
+          <p>How the information is expressed.</p>
+        </div>
+        <ul>
+          <li><code>M1</code><b>Narrative framing</b>Rewrite the document in a pro-target voice.</li>
+          <li><code>M2</code><b>Selective emphasis</b>Use stronger modifiers for the target.</li>
+          <li><code>M3</code><b>Criteria reframing</b>Prepend a paragraph that reframes the criteria.</li>
+          <li><code>M4</code><b>Weakness as strength</b>Reframe weaknesses as design choices.</li>
+          <li><code>M5</code><b>Semantic confusion</b>Use true but ambiguous terms.</li>
+          <li><code>M6</code><b>Anchoring</b>Lead with a strong claim about the target.</li>
+          <li><code>M7</code><b>Loss framing</b>Frame the other products as missed opportunities.</li>
+          <li><code>M8</code><b>Scarcity</b>Add scarcity or urgency cues to the target.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ---- document comparison tool ---- -->
+    <details class="doc-explorer" id="docExplorer">
+      <summary>
+        <span class="de-chev" aria-hidden="true">▶</span>
+        <span class="de-title">See it on a real document</span>
+        <span class="de-sub">magnesium supplements</span>
+      </summary>
+      <div class="doc-explorer-body">
+        <p class="doc-intro">
+          This is what the model actually reads. The left pane holds the neutral baseline for one
+          domain. Pick a technique on the right, then compare the two versions.
+        </p>
+        <div class="doc-controls">
+          <span class="doc-controls-label">Compare the baseline with</span>
+          <div class="var-dd" id="varDD"></div>
+        </div>
+        <div class="doc-compare">
+          <div class="doc-pane">
+            <div class="doc-pane-head">Neutral baseline</div>
+            <div class="doc-body" id="baselineDoc"></div>
+          </div>
+          <div class="doc-pane">
+            <div class="doc-pane-head" id="variantHead"></div>
+            <div class="doc-body" id="variantDoc"></div>
+          </div>
+        </div>
+        <p class="doc-note">
+          Highlights mark what the technique changed against the neutral baseline:
+          <span class="ins">green is added</span>, <span class="del">red strike-through is removed</span>.
+          They are a visual aid for this page only. The model receives plain text with no highlighting.
+        </p>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- ============ RESULTS ============ -->
+<section class="section" id="results">
+  <div class="wrap">
+    <span class="eyebrow">Results</span>
+    <h2 class="h2">What the numbers show</h2>
+    <p class="section-note">
+      Explore the headline results by model, by technique, and by domain. Higher bars mean more
+      ranking disruption.
+    </p>
+
+    <div class="results">
+      <div class="tabs-wrap">
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-view="models">By model</button>
+          <button class="tab" data-view="techniques">By technique</button>
+          <button class="tab" data-view="domains">By domain</button>
+        </div>
+      </div>
+
+      <div class="metric-toggle" id="metricToggle" hidden>
+        <button class="chip active" data-metric="tv">Ranking shift</button>
+        <button class="chip" data-metric="nrg">Rank gain</button>
+        <button class="chip" data-metric="top1">Top-1 rate</button>
+      </div>
+
+      <div class="chart" id="chart"></div>
+      <div class="legend" id="legend" hidden>
+        <span><i style="background:var(--cat-processing)"></i>Processing</span>
+        <span><i style="background:var(--cat-relation)"></i>Relation</span>
+        <span><i style="background:var(--cat-quantity)"></i>Quantity</span>
+        <span><i style="background:var(--cat-manner)"></i>Manner</span>
+        <span><i style="background:var(--cat-combo)"></i>Combination</span>
+        <span><i style="background:var(--cat-baseline)"></i>Unmodified article</span>
+      </div>
+      <p class="chart-caption" id="chartCaption"></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MITIGATIONS ============ -->
+<section class="section" id="mitigations">
+  <div class="wrap">
+    <span class="eyebrow">Mitigations</span>
+    <h2 class="h2">Do mitigations help?</h2>
+    <p class="section-note">
+      We test whether framing susceptibility can be reduced at inference time. Framing is hard to
+      counter, because every claim in a framed document is accurate and it reads like ordinary prose.
+    </p>
+
+    <div class="def-grid">
+      <div class="def fail">
+        <h4><span class="mark">✕</span> Standard mitigations fall short</h4>
+        <p>These were built for prompt injection and adversarial attacks.</p>
+        <ul>
+          <li><b>Detectors</b> catch the most obvious rewrite, narrative framing. They miss the other
+            17 techniques.</li>
+          <li><b>Spotlighting, debiasing prompts, and chain-of-thought</b> produce almost no reduction
+            in target promotion.</li>
+        </ul>
+      </div>
+      <div class="def work">
+        <h4><span class="mark">✓</span> Two alternatives work better</h4>
+        <p>Both are designed for the framing problem directly.</p>
+        <ul>
+          <li><b>Document sanitization</b> rewrites each retrieved article into a neutral form before
+            the model ranks it. This removes almost all of the strongest technique's effect.</li>
+          <li><b>User-stated criteria</b> let the user fix what counts as "best" in the prompt, before
+            the model reads the document.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CITE ============ -->
+<section class="section" id="cite">
+  <div class="wrap narrow">
+    <span class="eyebrow">Reference</span>
+    <h2 class="h2">Citation</h2>
+    <div class="bibtex">
+      <button class="copy-btn" id="copyBib">Copy</button>
+      <pre id="bibtex"><code>@inproceedings{alhamoudllms,
+  title={LLMs Struggle to Rank Products Robustly},
+  author={Alhamoud, Kumail and Moraitaki, Charikleia and Hinojosa, Carlos and Zhou, Jennifer and Hao, Yuexing and Torr, Philip and Bibi, Adel and Ghassemi, Marzyeh},
+  booktitle={Second Workshop on Agents in the Wild: Safety, Security, and Beyond}
+}</code></pre>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="wrap">
+    <p>FramingBench</p>
+    <p class="muted">© 2026</p>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="explorer_data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
